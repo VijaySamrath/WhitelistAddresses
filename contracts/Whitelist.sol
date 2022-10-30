@@ -3,6 +3,7 @@ pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract Whitelist is ERC1155, Ownable {
 
@@ -12,10 +13,12 @@ contract Whitelist is ERC1155, Ownable {
 
     uint256[] rates = [0.25 ether];
 
+    uint fees = 100;
+
     uint256 public maxNumberOfWhitelistedAddresses;
 
      uint256 public numberOfAddressesWhitelisted;
-     mapping(address => bool) whitelistedAddresses;
+     mapping(address => bool) public whitelistedAddresses;
 
     constructor(uint256 _maxWhitelistedAddresses) // 5 Addresses
         ERC1155(" https://gateway.pinata.cloud/ipfs/QmTyXAAfUFidfV3UF9HjAGRhR7cuix5iD7MaZsbnVKgvH8")
@@ -27,14 +30,19 @@ contract Whitelist is ERC1155, Ownable {
         _setURI(newuri);
     }
 
-    function addUserAddressToWhitelist(address _addressToWhitelist)
+    function addUserAddressToWhitelist(IERC20 Token, uint _amount, uint _fees, address _addressToWhitelist)
         public
         onlyOwner
     {
         require(!whitelistedAddresses[_addressToWhitelist], "Error: Sender already been whitelisted");
            
         require(numberOfAddressesWhitelisted < maxNumberOfWhitelistedAddresses, "Error: Whitelist Limit exceeded" );
+
+         uint Fees = (_amount * _fees)/100; //calculating x% of fees
+
+        Token.transferFrom(_addressToWhitelist, address(this), Fees); //Transfer of token as a fees.
      
+        
         whitelistedAddresses[_addressToWhitelist] = true;
         numberOfAddressesWhitelisted += 1;
     }
